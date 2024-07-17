@@ -1,0 +1,7 @@
+[
+{
+  "directory": "/Volumes/Workplaces/AI/Projects/YPLiOCR/app/.cxx/Debug/3j5n34o2/x86",
+  "command": "/Users/mac/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/bin/clang++ --target=i686-none-linux-android23 --sysroot=/Users/mac/Library/Android/sdk/ndk/26.1.10909125/toolchains/llvm/prebuilt/darwin-x86_64/sysroot -Dscan_EXPORTS -g -DANDROID -fdata-sections -ffunction-sections -funwind-tables -fstack-protector-strong -no-canonical-prefixes -mstackrealign -D_FORTIFY_SOURCE=2 -Wformat -Werror=format-security   -fno-limit-debug-info  -fPIC -o CMakeFiles/scan.dir/native-lib.cpp.o -c /Volumes/Workplaces/AI/Projects/YPLiOCR/app/src/main/cpp/native-lib.cpp",
+  "file": "/Volumes/Workplaces/AI/Projects/YPLiOCR/app/src/main/cpp/native-lib.cpp"
+}
+]
