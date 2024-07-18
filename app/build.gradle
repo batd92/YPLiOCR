@@ -6,14 +6,29 @@ android {
     namespace 'com.engine.scan'
     compileSdk 34
 
+    sourceSets {
+        main {
+            assets.srcDirs = ['src/main/assets']
+        }
+    }
+
     defaultConfig {
         applicationId "com.engine.scan"
-        minSdk 23
-        targetSdk 34
+        minSdk 21
         versionCode 1
         versionName "1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        externalNativeBuild {
+            cmake {
+                cppFlags "-std=c++11 -frtti -fexceptions -Wno-format"
+                arguments "-DANDROID_PLATFORM=latest", '-DANDROID_STL=c++_shared', '-DANDROID_ARM_NEON=TRUE'
+            }
+        }
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters 'armeabi-v7a', 'arm64-v8a'
+        }
     }
 
     buildTypes {
@@ -35,6 +50,8 @@ android {
     buildFeatures {
         viewBinding true
     }
+    ndkVersion "21.1.6352462"
+    buildToolsVersion '34.0.0'
 }
 
 dependencies {
@@ -46,19 +63,18 @@ dependencies {
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
 
-    implementation 'androidx.activity:activity:1.4.0'
-    implementation 'androidx.core:core:1.7.0'
+    implementation libs.activity
+    implementation libs.core
 
-    String cameraxVersion = "1.4.0-alpha04";
-    implementation "androidx.camera:camera-camera2:${cameraxVersion}"
-    implementation "androidx.camera:camera-lifecycle:${cameraxVersion}"
-    implementation "androidx.camera:camera-view:${cameraxVersion}"
+    implementation libs.camera.camera2
+    implementation libs.camera.lifecycle
+    implementation libs.camera.view
 
-    implementation 'org.tensorflow:tensorflow-lite:2.16.1'
-    implementation 'org.tensorflow:tensorflow-lite-support:0.4.4'
-    implementation 'org.tensorflow:tensorflow-lite-gpu-delegate-plugin:0.4.4'
-    implementation 'org.tensorflow:tensorflow-lite-gpu-api:2.16.1'
-    implementation 'org.tensorflow:tensorflow-lite-api:2.16.1'
-    implementation 'org.tensorflow:tensorflow-lite-gpu:2.16.1'
-    implementation 'org.tensorflow:tensorflow-lite-select-tf-ops:2.16.1'
+    implementation libs.tensorflow.lite
+    implementation libs.tensorflow.lite.support
+    implementation libs.tensorflow.lite.gpu.delegate.plugin
+    implementation libs.tensorflow.lite.gpu.api
+    implementation libs.tensorflow.lite.api
+    implementation libs.tensorflow.lite.gpu
+    implementation libs.tensorflow.lite.select.tf.ops
 }

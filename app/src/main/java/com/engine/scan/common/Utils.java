@@ -19,50 +19,62 @@ public class Utils {
     private static final String TAG = Utils.class.getSimpleName();
 
     public static void copyFileFromAssets(Context appCtx, String srcPath, String dstPath) {
-        if (srcPath.isEmpty() || dstPath.isEmpty()) {
+        if (srcPath == null || srcPath.isEmpty() || dstPath == null || dstPath.isEmpty()) {
             return;
         }
-        InputStream is = null;
-        OutputStream os = null;
-        try {
-            is = new BufferedInputStream(appCtx.getAssets().open(srcPath));
-            os = new BufferedOutputStream(new FileOutputStream(new File(dstPath)));
+
+        try (InputStream is = new BufferedInputStream(appCtx.getAssets().open(srcPath));
+             OutputStream os = new BufferedOutputStream(new FileOutputStream(new File(dstPath)))) {
+
             byte[] buffer = new byte[1024];
             int length;
             while ((length = is.read(buffer)) != -1) {
                 os.write(buffer, 0, length);
             }
+
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            try {
-                os.close();
-                is.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
+
     public static void copyDirectoryFromAssets(Context appCtx, String srcDir, String dstDir) {
-        if (srcDir.isEmpty() || dstDir.isEmpty()) {
+        if (srcDir == null || srcDir.isEmpty() || dstDir == null || dstDir.isEmpty()) {
             return;
         }
+
         try {
-            if (!new File(dstDir).exists()) {
-                new File(dstDir).mkdirs();
+            String[] assets = appCtx.getAssets().list(srcDir);
+            if (assets == null || assets.length == 0) {
+                return;
             }
-            for (String fileName : appCtx.getAssets().list(srcDir)) {
+
+            File dstDirFile = new File(dstDir);
+            if (!dstDirFile.exists() && !dstDirFile.mkdirs()) {
+                throw new IOException("Failed to create directory: " + dstDir);
+            }
+
+            for (String fileName : assets) {
                 String srcSubPath = srcDir + File.separator + fileName;
                 String dstSubPath = dstDir + File.separator + fileName;
-                if (new File(srcSubPath).isDirectory()) {
+
+                if (isDirectory(appCtx, srcSubPath)) {
                     copyDirectoryFromAssets(appCtx, srcSubPath, dstSubPath);
                 } else {
                     copyFileFromAssets(appCtx, srcSubPath, dstSubPath);
                 }
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private static boolean isDirectory(Context appCtx, String path) {
+        try {
+            String[] assets = appCtx.getAssets().list(path);
+            return assets != null && assets.length > 0;
+        } catch (IOException e) {
+            return false;
         }
     }
 
@@ -100,25 +112,22 @@ public class Utils {
         Camera.Size optimalSize = null;
         double minDiff = Double.MAX_VALUE;
 
-        int targetHeight = h;
-
         // Try to find an size match aspect ratio and size
         for (Camera.Size size : sizes) {
             double ratio = (double) size.width / size.height;
             if (Math.abs(ratio - targetRatio) > ASPECT_TOLERANCE) continue;
-            if (Math.abs(size.height - targetHeight) < minDiff) {
+            if (Math.abs(size.height - h) < minDiff) {
                 optimalSize = size;
-                minDiff = Math.abs(size.height - targetHeight);
+                minDiff = Math.abs(size.height - h);
             }
         }
 
         // Cannot find the one match the aspect ratio, ignore the requirement
         if (optimalSize == null) {
-            minDiff = Double.MAX_VALUE;
             for (Camera.Size size : sizes) {
-                if (Math.abs(size.height - targetHeight) < minDiff) {
+                if (Math.abs(size.height - h) < minDiff) {
                     optimalSize = size;
-                    minDiff = Math.abs(size.height - targetHeight);
+                    minDiff = Math.abs(size.height - h);
                 }
             }
         }
@@ -141,7 +150,6 @@ public class Utils {
         int degrees = 0;
         switch (rotation) {
             case Surface.ROTATION_0:
-                degrees = 0;
                 break;
             case Surface.ROTATION_90:
                 degrees = 90;
@@ -229,44 +237,29 @@ public class Utils {
 
     public static void copyAssets(Context ctx, String nnFileName) throws
             SDKExceptions.NoSDCardPermission,
-            SDKExceptions.MissingModleFileInAssetFolder {
+            SDKExceptions.MissingModleFileInAssetFolder
+    {
         AssetManager assetManager = ctx.getAssets();
-        InputStream is = null;
-        try {
-            is = assetManager.open(nnFileName);
+
+        try (InputStream is = assetManager.open(nnFileName)) {
         } catch (IOException ex) {
-            // file does not exist
             throw new SDKExceptions.MissingModleFileInAssetFolder();
-        } finally {
-            if (is != null) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
         }
 
-        // check SD card power
         int perm = ctx.checkCallingOrSelfPermission("android.permission.WRITE_EXTERNAL_STORAGE");
-        if (!(perm == PackageManager.PERMISSION_GRANTED)) {
-            // Log.e(TAG, "please grant permission for SD storeage.");
+        if (perm != PackageManager.PERMISSION_GRANTED) {
             throw new SDKExceptions.NoSDCardPermission();
         }
-        // check whether file on SD card
-        File fileInSD = new File(ctx.getExternalFilesDir(null), nnFileName);
 
+        File fileInSD = new File(ctx.getExternalFilesDir(null), nnFileName);
         if (fileInSD.exists()) {
             Log.d("debug===", "NN model on SD card " + fileInSD);
             return;
         }
-        // copy file to app
-        InputStream in = null;
-        OutputStream out = null;
-        try {
-            in = assetManager.open(nnFileName);
-            File outFile = new File(ctx.getExternalFilesDir(null), nnFileName);
-            out = new FileOutputStream(outFile);
+
+        try (InputStream in = assetManager.open(nnFileName);
+             OutputStream out = new FileOutputStream(fileInSD)) {
+
             byte[] buffer = new byte[1024];
             int read;
             while ((read = in.read(buffer)) != -1) {
@@ -274,19 +267,6 @@ public class Utils {
             }
         } catch (IOException e) {
             Log.e("tag", "Failed to copy asset file: " + nnFileName, e);
-        } finally {
-            if (in != null) {
-                try {
-                    in.close();
-                } catch (IOException e) {
-                }
-            }
-            if (out != null) {
-                try {
-                    out.close();
-                } catch (IOException e) {
-                }
-            }
         }
     }
 }

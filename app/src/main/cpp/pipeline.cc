@@ -15,10 +15,11 @@
 #include "pipeline.h"
 #include <iostream>
 
-cv::Mat GetRotateCropImage(cv::Mat srcimage,
-                           std::vector<std::vector<int>> box) {
+cv::Mat GetRotateCropImage(const cv::Mat& scrimmage,
+                           std::vector<std::vector<int>> box)
+{
   cv::Mat image;
-  srcimage.copyTo(image);
+  scrimmage.copyTo(image);
   std::vector<std::vector<int>> points = box;
 
   int x_collect[4] = {box[0][0], box[1][0], box[2][0], box[3][0]};
@@ -31,7 +32,8 @@ cv::Mat GetRotateCropImage(cv::Mat srcimage,
   cv::Mat img_crop;
   image(cv::Rect(left, top, right - left, bottom - top)).copyTo(img_crop);
 
-  for (int i = 0; i < points.size(); i++) {
+  for (int i = 0; i < points.size(); i++)
+  {
     points[i][0] -= left;
     points[i][1] -= top;
   }
@@ -64,33 +66,42 @@ cv::Mat GetRotateCropImage(cv::Mat srcimage,
 
   const float ratio = 1.5;
   if (static_cast<float>(dst_img.rows) >=
-      static_cast<float>(dst_img.cols) * ratio) {
+      static_cast<float>(dst_img.cols) * ratio)
+  {
     cv::Mat srcCopy = cv::Mat(dst_img.rows, dst_img.cols, dst_img.depth());
     cv::transpose(dst_img, srcCopy);
     cv::flip(srcCopy, srcCopy, 0);
     return srcCopy;
-  } else {
+  }
+  else
+  {
     return dst_img;
   }
 }
 
-std::vector<std::string> ReadDict(std::string path) {
+std::vector<std::string> ReadDict(std::string path)
+{
   std::ifstream in(path);
   std::string filename;
   std::string line;
   std::vector<std::string> m_vec;
-  if (in) {
-    while (getline(in, line)) {
+  if (in)
+  {
+    while (getline(in, line))
+    {
       m_vec.push_back(line);
     }
-  } else {
+  }
+  else
+  {
     std::cout << "no such file" << std::endl;
   }
   return m_vec;
 }
 
 std::vector<std::string> split(const std::string &str,
-                               const std::string &delim) {
+                               const std::string &delim)
+{
   std::vector<std::string> res;
   if ("" == str)
     return res;
@@ -101,7 +112,8 @@ std::vector<std::string> split(const std::string &str,
   std::strcpy(d, delim.c_str());
 
   char *p = std::strtok(strs, d);
-  while (p) {
+  while (p)
+  {
     std::string s = p;
     res.push_back(s);
     p = std::strtok(NULL, d);
@@ -110,11 +122,13 @@ std::vector<std::string> split(const std::string &str,
   return res;
 }
 
-std::map<std::string, double> LoadConfigTxt(std::string config_path) {
+std::map<std::string, double> LoadConfigTxt(std::string config_path)
+{
   auto config = ReadDict(config_path);
 
   std::map<std::string, double> dict;
-  for (int i = 0; i < config.size(); i++) {
+  for (int i = 0; i < config.size(); i++)
+  {
     std::vector<std::string> res = split(config[i], " ");
     dict[res[0]] = stod(res[1]);
   }
@@ -123,17 +137,21 @@ std::map<std::string, double> LoadConfigTxt(std::string config_path) {
 
 cv::Mat Visualization(cv::Mat srcimg,
                       std::vector<std::vector<std::vector<int>>> boxes,
-                      std::string output_image_path) {
+                      std::string output_image_path)
+{
   cv::Point rook_points[boxes.size()][4];
-  for (int n = 0; n < boxes.size(); n++) {
-    for (int m = 0; m < boxes[0].size(); m++) {
+  for (int n = 0; n < boxes.size(); n++)
+  {
+    for (int m = 0; m < boxes[0].size(); m++)
+    {
       rook_points[n][m] = cv::Point(static_cast<int>(boxes[n][m][0]),
                                     static_cast<int>(boxes[n][m][1]));
     }
   }
   cv::Mat img_vis;
   srcimg.copyTo(img_vis);
-  for (int n = 0; n < boxes.size(); n++) {
+  for (int n = 0; n < boxes.size(); n++)
+  {
     const cv::Point *ppt[1] = {rook_points[n]};
     int npt[] = {4};
     cv::polylines(img_vis, ppt, npt, 1, 1, CV_RGB(0, 255, 0), 2, 8, 0);
@@ -147,7 +165,8 @@ cv::Mat Visualization(cv::Mat srcimg,
 void Pipeline::VisualizeResults(std::vector<std::string> rec_text,
                                 std::vector<float> rec_text_score,
                                 cv::Mat *rgbaImage,
-                                double *visualizeResultsTime) {
+                                double *visualizeResultsTime)
+{
   auto t = GetCurrentTime();
   char text[255];
   cv::Scalar color = cv::Scalar(255, 255, 255);
@@ -162,7 +181,8 @@ void Pipeline::VisualizeResults(std::vector<std::string> rec_text,
   cv::putText(*rgbaImage, text, offset, font_face, font_scale, color,
               thickness);
 
-  for (int i = 0; i < rec_text.size(); i++) {
+  for (int i = 0; i < rec_text.size(); i++)
+  {
     LOGD("debug=== line %d %s, %f", i, rec_text[i].c_str(), rec_text_score[i]);
     sprintf(text, "line: %d %s  %f", i, rec_text[i].c_str(), rec_text_score[i]);
     offset.y += text_size.height;
@@ -178,7 +198,8 @@ void Pipeline::VisualizeStatus(double readGLFBOTime, double writeGLTextureTime,
                                std::vector<std::string> rec_text,
                                std::vector<float> rec_text_score,
                                double visualizeResultsTime,
-                               cv::Mat *rgbaImage) {
+                               cv::Mat *rgbaImage)
+{
   char text[255];
   cv::Scalar color = cv::Scalar(255, 255, 255);
   int font_face = cv::FONT_HERSHEY_PLAIN;
@@ -212,7 +233,8 @@ Pipeline::Pipeline(const std::string &detModelDir,
                    const std::string &recModelDir,
                    const std::string &cPUPowerMode, const int cPUThreadNum,
                    const std::string &config_path,
-                   const std::string &dict_path) {
+                   const std::string &dict_path)
+{
   clsPredictor_.reset(
       new ClsPredictor(clsModelDir, cPUThreadNum, cPUPowerMode));
   detPredictor_.reset(
@@ -226,7 +248,8 @@ Pipeline::Pipeline(const std::string &detModelDir,
 }
 
 bool Pipeline::Process_val(int inTextureId, int outTextureId, int textureWidth,
-                           int textureHeight, std::string savedImagePath) {
+                           int textureHeight, std::string savedImagePath)
+{
   double readGLFBOTime = 0, writeGLTextureTime = 0;
   double visualizeResultsTime = 0, predictTime = 0;
   int height = 448;
@@ -241,13 +264,13 @@ bool Pipeline::Process_val(int inTextureId, int outTextureId, int textureWidth,
   cv::resize(bgrImage, bgrImage_resize, cv::Size(width, height));
 
   int use_direction_classify = int(Config_["use_direction_classify"]);
-  cv::Mat srcimg;
-  bgrImage_resize.copyTo(srcimg);
+  cv::Mat src_image;
+  bgrImage_resize.copyTo(src_image);
   // Stage1: rec
   auto t = GetCurrentTime();
   // det predict
   auto boxes =
-      detPredictor_->Predict(srcimg, Config_, nullptr, nullptr, nullptr);
+      detPredictor_->Predict(src_image, Config_, nullptr, nullptr, nullptr);
 
   std::vector<float> mean = {0.5f, 0.5f, 0.5f};
   std::vector<float> scale = {1 / 0.5f, 1 / 0.5f, 1 / 0.5f};
@@ -259,9 +282,11 @@ bool Pipeline::Process_val(int inTextureId, int outTextureId, int textureWidth,
   std::vector<std::string> rec_text;
   std::vector<float> rec_text_score;
   LOGD("debug===boxes: %d", boxes.size());
-  for (int i = boxes.size() - 1; i >= 0; i--) {
+  for (int i = boxes.size() - 1; i >= 0; i--)
+  {
     crop_img = GetRotateCropImage(img, boxes[i]);
-    if (use_direction_classify >= 1) {
+    if (use_direction_classify >= 1)
+    {
       crop_img =
           clsPredictor_->Predict(crop_img, nullptr, nullptr, nullptr, 0.9);
     }
@@ -284,4 +309,41 @@ bool Pipeline::Process_val(int inTextureId, int outTextureId, int textureWidth,
 
   WriteRGBAImageBackToGLTexture(img_vis, outTextureId, &writeGLTextureTime);
   return true;
+}
+
+OCRResult Pipeline::Process_valText(const cv::Mat &bgrImage)
+{
+  double visualizeResultsTime = 0, predictTime = 0;
+  int height = 448;
+  int width = 448;
+
+  // Resize input image
+  cv::Mat bgrImage_resize;
+  cv::resize(bgrImage, bgrImage_resize, cv::Size(width, height));
+
+  int use_direction_classify = int(Config_["use_direction_classify"]);
+  cv::Mat src_image;
+  bgrImage_resize.copyTo(src_image);
+
+  // Stage1: rec
+  auto t = GetCurrentTime();
+
+  // det predict
+  auto boxes =
+      detPredictor_->Predict(src_image, Config_, nullptr, nullptr, nullptr);
+
+  OCRResult result;
+  for (int i = boxes.size() - 1; i >= 0; i--)
+  {
+    cv::Mat crop_img = GetRotateCropImage(bgrImage_resize, boxes[i]);
+    if (use_direction_classify >= 1)
+    {
+      crop_img = clsPredictor_->Predict(crop_img, nullptr, nullptr, nullptr, 0.9);
+    }
+    auto res = recPredictor_->Predict(crop_img, nullptr, nullptr, nullptr, charactor_dict_);
+    result.rec_text.push_back(res.first);
+    result.rec_text_score.push_back(res.second);
+  }
+
+  return result;
 }

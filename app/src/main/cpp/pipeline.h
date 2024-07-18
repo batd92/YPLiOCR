@@ -26,6 +26,10 @@
 #include <string>
 #include <vector>
 using namespace paddle::lite_api; // NOLINT
+struct OCRResult {
+    std::vector<std::string> rec_text;
+    std::vector<float> rec_text_score;
+};
 
 class Pipeline {
 public:
@@ -37,6 +41,7 @@ public:
   bool Process_val(int inTextureId, int outTextureId, int textureWidth,
                    int textureHeight, std::string savedImagePath);
 
+  OCRResult Process_valText(const cv::Mat &bgrImage);
 private:
   // Read pixels from FBO texture to CV image
   void CreateRGBAImageFromGLFBOTexture(int textureWidth, int textureHeight,

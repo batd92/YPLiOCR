@@ -123,7 +123,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * WorkerThread receiver message of model
-     * @param message
      */
     private void handleReceiverMessage(@NonNull Message message) {
         switch (message.what) {
@@ -152,7 +151,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * WorkerThread Receiver Request
-     * @param message
      */
     private void handleSenderMessage(@NonNull Message message) {
         int responseMessage;
@@ -253,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
 
     /**
      * Detect image
-     * @return
      */
     public boolean onRunModel() {
         // Detect by yolo -> paddler ocr
@@ -270,10 +267,10 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("onRunModel", "Cropped images created: " + croppedImages.size());
 
                         for (Bitmap croppedImage : croppedImages) {
-                            boolean modified = paddleNative.process(inTextureId, outTextureId, textureWidth, textureHeight, savedImagePath);
-                            if (modified) {
-                                // get Text from PaddleOCR
-                            }
+//                            boolean modified = paddleNative.runImage(croppedImage);
+//                            if (modified) {
+//                                // get Text from PaddleOCR
+//                            }
                         }
 
                         // Draw bounding boxes

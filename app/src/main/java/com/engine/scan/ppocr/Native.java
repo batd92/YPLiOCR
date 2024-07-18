@@ -2,10 +2,9 @@ package com.engine.scan.ppocr;
 
 import android.content.Context;
 import android.util.Log;
+import android.graphics.Bitmap;
 
-import com.engine.scan.common.SDKExceptions;
-import com.engine.scan.common.Utils;
-
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Native {
@@ -22,10 +21,8 @@ public class Native {
         }
     }
 
-
+    private boolean run_status;
     private long ctx = 0;
-    private boolean run_status = false;
-
     public boolean init(Context mContext,
                         String detModelPath,
                         String clsModelPath,
@@ -60,7 +57,7 @@ public class Native {
         return run_status;
     }
 
-    public static native long nativeInit(String detModelPath,
+    public native long nativeInit(String detModelPath,
                                          String clsModelPath,
                                          String recModelPath,
                                          String configPath,
@@ -69,6 +66,21 @@ public class Native {
                                          String cpuPowerMode);
 
     public static native boolean nativeRelease(long ctx);
-
     public static native boolean nativeProcess(long ctx, int inTextureId, int outTextureId, int textureWidth, int textureHeight, String savedImagePath);
+    public static native Object[] nativeBitmapProcess(long ctx, Bitmap originalImage);
+
+    public ArrayList<OcrResultModel> runImage(Bitmap originalImage) {
+        Log.i("OCRPredictorNative", "begin to run image ");
+        if (ctx == 0) {
+            return new ArrayList<>();
+        }
+        Object[] rawResults = nativeBitmapProcess(ctx, originalImage);
+        return postProcess(rawResults);
+    }
+
+    private ArrayList<OcrResultModel> postProcess(Object[] raw) {
+        ArrayList<OcrResultModel> results = new ArrayList<OcrResultModel>();
+        int begin = 0;
+        return results;
+    }
 }
