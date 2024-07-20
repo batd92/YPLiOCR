@@ -28,8 +28,9 @@ import java.util.List;
 
 public class Detector {
     private final Context context;
-    private final String modelPath;
-    private final String labelPath;
+    // YOLO model
+    protected final String modelPath = "models/best_meter_float32.tflite";
+    protected final String labelPath = "labels/labels.txt";
 
     protected Interpreter interpreter;
     private final List<String> labels = new ArrayList<>();
@@ -49,11 +50,8 @@ public class Detector {
     private static final float IOU_THRESHOLD = 0.5F;
 
     // Yolo v8
-    public Detector(Context context, String modelPath, String labelPath) {
+    public Detector(Context context) {
         this.context = context;
-        this.modelPath = modelPath;
-        this.labelPath = labelPath;
-
         this.imageProcessor = new ImageProcessor.Builder()
                 .add(new NormalizeOp(INPUT_MEAN, INPUT_STANDARD_DEVIATION))
                 .add(new CastOp(INPUT_IMAGE_TYPE))

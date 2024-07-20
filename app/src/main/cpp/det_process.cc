@@ -21,39 +21,41 @@
 // resize image to a size multiple of 32 which is required by the network
 cv::Mat DetResizeImg(const cv::Mat img, int max_size_len,
                      std::vector<float> &ratio_hw) {
-  int w = img.cols;
-  int h = img.rows;
-  float ratio = 1.f;
-  int max_wh = w >= h ? w : h;
-  if (max_wh > max_size_len) {
-    if (h > w) {
-      ratio = static_cast<float>(max_size_len) / static_cast<float>(h);
-    } else {
-      ratio = static_cast<float>(max_size_len) / static_cast<float>(w);
+    int w = img.cols;
+    int h = img.rows;
+
+    float ratio = 1.f;
+    int max_wh = w >= h ? w : h;
+    if (max_wh > max_size_len) {
+        if (h > w) {
+            ratio = static_cast<float>(max_size_len) / static_cast<float>(h);
+        } else {
+            ratio = static_cast<float>(max_size_len) / static_cast<float>(w);
+        }
     }
-  }
 
-  int resize_h = static_cast<int>(float(h) * ratio);
-  int resize_w = static_cast<int>(float(w) * ratio);
-  if (resize_h % 32 == 0)
-    resize_h = resize_h;
-  else if (resize_h / 32 < 1 + 1e-5)
-    resize_h = 32;
-  else
-    resize_h = (resize_h / 32 - 1) * 32;
+    int resize_h = static_cast<int>(float(h) * ratio);
+    int resize_w = static_cast<int>(float(w) * ratio);
+    if (resize_h % 32 == 0)
+        resize_h = resize_h;
+    else if (resize_h / 32 < 1 + 1e-5)
+        resize_h = 32;
+    else
+        resize_h = (resize_h / 32 - 1) * 32;
 
-  if (resize_w % 32 == 0)
-    resize_w = resize_w;
-  else if (resize_w / 32 < 1 + 1e-5)
-    resize_w = 32;
-  else
-    resize_w = (resize_w / 32 - 1) * 32;
-  cv::Mat resize_img;
-  cv::resize(img, resize_img, cv::Size(resize_w, resize_h));
+    if (resize_w % 32 == 0)
+        resize_w = resize_w;
+    else if (resize_w / 32 < 1 + 1e-5)
+        resize_w = 32;
+    else
+        resize_w = (resize_w / 32 - 1) * 32;
 
-  ratio_hw.push_back(static_cast<float>(resize_h) / static_cast<float>(h));
-  ratio_hw.push_back(static_cast<float>(resize_w) / static_cast<float>(w));
-  return resize_img;
+    cv::Mat resize_img;
+    cv::resize(img, resize_img, cv::Size(resize_w, resize_h));
+
+    ratio_hw.push_back(static_cast<float>(resize_h) / static_cast<float>(h));
+    ratio_hw.push_back(static_cast<float>(resize_w) / static_cast<float>(w));
+    return resize_img;
 }
 
 DetPredictor::DetPredictor(const std::string &modelDir, const int cpuThreadNum,
