@@ -1,91 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
     tools:context=".MainActivity">
 
-    <RelativeLayout
+    <LinearLayout
+        android:id="@+id/v_input_info"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_alignParentTop="true">
 
         <LinearLayout
-            android:id="@+id/v_input_info"
+            android:id="@+id/btn_layout"
+            style="?android:attr/buttonBarStyle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:orientation="vertical">
+            android:orientation="horizontal">
 
-            <LinearLayout
-                android:id="@+id/btn_layout"
-                style="?android:attr/buttonBarStyle"
-                android:layout_width="match_parent"
+            <Button
+                android:id="@+id/btn_run_model"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_weight="1"
+                android:background="@drawable/button_background"
+                android:onClick="btn_run_model_click"
+                android:text="Run"
+                tools:ignore="HardcodedText,UsingOnClickInXml" />
 
-                <Button
-                    android:id="@+id/btn_run_model"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/button_background"
-                    android:onClick="btn_run_model_click"
-                    android:text="Run"
-                    android:textColor="#FFEB3B"
-                    tools:ignore="HardcodedText,UsingOnClickInXml" />
+            <Button
+                android:id="@+id/btn_choice_img"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/button_background"
+                android:onClick="btn_choice_img_click"
+                android:text="Select img"
+                tools:ignore="HardcodedText,UsingOnClickInXml" />
 
-                <Button
-                    android:id="@+id/btn_choice_img"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="@drawable/button_background"
-                    android:onClick="btn_choice_img_click"
-                    android:text="Select img"
-                    android:textColor="#FFEB3B"
-                    tools:ignore="HardcodedText,UsingOnClickInXml" />
+            <Button
+                android:id="@+id/btn_reset_img"
+                style="?android:attr/buttonBarButtonStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@drawable/button_background"
+                android:onClick="btn_reset_img_click"
+                android:text="Clear"
+                tools:ignore="HardcodedText,UsingOnClickInXml" />
 
-                <Button
-                    android:id="@+id/btn_reset_img"
-                    style="?android:attr/buttonBarButtonStyle"
-                    android:layout_width="0dp"
-                    android:layout_height="120dp"
-                    android:layout_weight="1"
-                    android:background="@drawable/button_background"
-                    android:onClick="btn_reset_img_click"
-                    android:text="Clear"
-                    android:textColor="#FFEB3B"
-                    tools:ignore="HardcodedText,UsingOnClickInXml" />
-
-            </LinearLayout>
         </LinearLayout>
+    </LinearLayout>
 
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_below="@id/v_input_info">
+    <ImageView
+        android:id="@+id/iv_input_image"
+        android:layout_width="400dp"
+        android:layout_height="600dp"
+        android:layout_below="@id/v_input_info"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginBottom="5dp"
+        android:adjustViewBounds="true"
+        android:background="@drawable/image_border"
+        android:scaleType="fitCenter" />
 
-            <ImageView
-                android:id="@+id/iv_input_image"
-                android:layout_width="400dp"
-                android:layout_height="match_parent"
-                android:layout_centerInParent="true"
-                android:layout_marginLeft="12dp"
-                android:layout_marginTop="5dp"
-                android:layout_marginRight="12dp"
-                android:layout_marginBottom="5dp"
-                android:adjustViewBounds="true"
-                android:background="@drawable/image_border"
-                android:padding="4dp"
-                android:scaleType="fitCenter" />
+    <com.engine.scan.yolo.OverlayView
+        android:id="@+id/overlayView"
+        android:layout_width="400dp"
+        android:layout_height="600dp"
+        android:layout_alignTop="@id/iv_input_image"
+        android:layout_alignStart="@id/iv_input_image"
+        android:layout_alignEnd="@id/iv_input_image"
+        android:layout_alignBottom="@id/iv_input_image" />
 
-            <com.engine.scan.yolo.OverlayView
-                android:id="@+id/overlayView"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent" />
-        </RelativeLayout>
-    </RelativeLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+</RelativeLayout>

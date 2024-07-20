@@ -7,9 +7,11 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -29,12 +31,17 @@ import com.engine.scan.yolo.Detector;
 import com.engine.scan.yolo.OverlayView;
 import com.engine.scan.common.Utils;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class MainActivity extends AppCompatActivity {
+
+    protected static final String MODEL_PATH_DEFAULT = "models";
+    protected static final String LABEL_PATH_DEFAULT = "labels";
+    protected static final String CONFIG_PATH_DEFAULT = "config";
 
     // PaddleOCR model
     protected String detModelPath = "ch_ppocr_mobile_v2.0_det_slim_opt.nb";
@@ -44,10 +51,6 @@ public class MainActivity extends AppCompatActivity {
     protected String configPath = "config.txt";
     protected int cpuThreadNum = 1;
     protected String cpuPowerMode = "LITE_POWER_HIGH";
-
-    // YOLO model
-    protected String yoloModelPath = "best_meter_float32.tflite";
-    protected String yoloLabelPath = "labels.txt";
 
     public static final int REQUEST_LOAD_MODEL = 0;
     public static final int REQUEST_RUN_MODEL = 1;
@@ -78,9 +81,16 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
         clearPreferences();
+        getLayoutOnScreen();
         initHandlers();
         initWorkerThread();
+    }
+
+    // Setup the UI components
+    private void getLayoutOnScreen() {
+        ivInputImage = findViewById(R.id.iv_input_image);
     }
 
     /*
@@ -94,9 +104,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initYoLov8() {
-        yoloV8 = new Detector(this, yoloModelPath, yoloLabelPath);
+        yoloV8 = new Detector(this);
     }
-
 
     @SuppressLint("HandlerLeak")
     private void initHandlers() {
@@ -198,20 +207,28 @@ public class MainActivity extends AppCompatActivity {
     */
     public boolean onLoadModel() {
         try {
-            Utils.copyAssets(this, labelPath);
-            String labelRealDir = new File(this.getExternalFilesDir(null),labelPath).getAbsolutePath();
+            String realModelPath = "";
+            String realLabelPath = "";
+            String realConfigPath = "";
+            if (MODEL_PATH_DEFAULT.charAt(0) != '/') {
+                realModelPath = this.getCacheDir() + "/" + MODEL_PATH_DEFAULT;
+                Utils.copyDirectoryFromAssets(this, MODEL_PATH_DEFAULT, realModelPath);
 
-            Utils.copyAssets(this, configPath);
-            String configRealDir = new File(this.getExternalFilesDir(null), configPath).getAbsolutePath();
+                realLabelPath = this.getCacheDir() + "/" + LABEL_PATH_DEFAULT;
+                Utils.copyDirectoryFromAssets(this, LABEL_PATH_DEFAULT, realLabelPath);
 
-            Utils.copyAssets(this, detModelPath);
-            String detRealModelDir = new File(this.getExternalFilesDir(null), detModelPath).getAbsolutePath();
+                realConfigPath = this.getCacheDir() + "/" + CONFIG_PATH_DEFAULT;
+                Utils.copyDirectoryFromAssets(this, CONFIG_PATH_DEFAULT, realConfigPath);
+            }
+            if (realModelPath.isEmpty()) {
+                return false;
+            }
 
-            Utils.copyAssets(this, clsModelPath);
-            String clsRealModelDir = new File(this.getExternalFilesDir(null), clsModelPath).getAbsolutePath();
-
-            Utils.copyAssets(this, recModelPath);
-            String recRealModelDir = new File(this.getExternalFilesDir(null), recModelPath).getAbsolutePath();
+            String labelRealDir = realLabelPath + "/" + labelPath;
+            String configRealDir = realConfigPath + "/" + configPath;
+            String detRealModelDir = realModelPath + "/" + detModelPath;
+            String clsRealModelDir =  realModelPath + "/" + clsModelPath;
+            String recRealModelDir = realModelPath + "/" + recModelPath;
 
             boolean isLoadPaddle = paddleNative.init(
                 MainActivity.this,
@@ -267,10 +284,8 @@ public class MainActivity extends AppCompatActivity {
                         Log.d("onRunModel", "Cropped images created: " + croppedImages.size());
 
                         for (Bitmap croppedImage : croppedImages) {
-//                            boolean modified = paddleNative.runImage(croppedImage);
-//                            if (modified) {
-//                                // get Text from PaddleOCR
-//                            }
+                            saveImageToStorage(croppedImage);
+                            paddleNative.runImage(croppedImage);
                         }
 
                         // Draw bounding boxes
@@ -285,6 +300,22 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
             Log.e("onRunModel", "Error running model", e);
             return false;
+        }
+    }
+
+    private void saveImageToStorage(Bitmap bitmap) {
+        String fileName = "cropped_image_" + System.currentTimeMillis() + ".png"; // Generate unique file name
+        File storageDir = getApplicationContext().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
+        File imageFile = new File(storageDir, fileName);
+
+        try {
+            FileOutputStream fos = new FileOutputStream(imageFile);
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos); // Compress bitmap into PNG format
+            fos.close();
+            Log.d("saveImageToStorage", "Image saved to: " + imageFile.getAbsolutePath());
+        } catch (IOException e) {
+            e.printStackTrace();
+            Log.e("saveImageToStorage", "Error saving image: " + e.getMessage());
         }
     }
 
@@ -307,9 +338,13 @@ public class MainActivity extends AppCompatActivity {
 
             Bitmap croppedImage = Bitmap.createBitmap(image, left, top, width, height);
 
-            Bitmap scaledCroppedImage = Bitmap.createScaledBitmap(croppedImage, width, height, true);
+            if (height > width * 3) {
+                Matrix matrix = new Matrix();
+                matrix.postRotate(90);
+                croppedImage = Bitmap.createBitmap(croppedImage, 0, 0, croppedImage.getWidth(), croppedImage.getHeight(), matrix, true);
+            }
 
-            croppedImages.add(scaledCroppedImage);
+            croppedImages.add(croppedImage);
         }
         return croppedImages;
     }
@@ -364,6 +399,9 @@ public class MainActivity extends AppCompatActivity {
                     String[] proj = { MediaStore.Images.Media.DATA};
                     Cursor cursor = managedQuery(uri, proj, null, null, null);
                     cursor.moveToFirst();
+                    if (image != null) {
+                        ivInputImage.setImageBitmap(image);
+                    }
                 }
             }
         } catch (IOException e) {

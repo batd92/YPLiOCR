@@ -314,14 +314,24 @@ bool Pipeline::Process_val(int inTextureId, int outTextureId, int textureWidth,
 OCRResult Pipeline::Process_valText(const cv::Mat &bgrImage)
 {
   double visualizeResultsTime = 0, predictTime = 0;
-  int height = 448;
-  int width = 448;
 
-  // Resize input image
-  cv::Mat bgrImage_resize;
-  cv::resize(bgrImage, bgrImage_resize, cv::Size(width, height));
+    cv::Mat bgrImage_resize;
+    double scaleFactor = 0.1;
+    int newHeight = static_cast<int>(bgrImage.rows * scaleFactor);
+    int newWidth = static_cast<int>(bgrImage.cols * scaleFactor);
+    cv::resize(bgrImage, bgrImage_resize, cv::Size(newWidth, newHeight));
 
-  int use_direction_classify = int(Config_["use_direction_classify"]);
+    cv::Mat sharpenKernel = (cv::Mat_<float>(3, 3) <<
+                                                   0, -1, 0,
+            -1, 5, -1,
+            0, -1, 0);
+    cv::Mat bgrImage_sharpened;
+    cv::filter2D(bgrImage_resize, bgrImage_sharpened, -1, sharpenKernel);
+
+    cv::Mat bgrImage_contrast;
+    cv::convertScaleAbs(bgrImage_sharpened, bgrImage_contrast, 1.5, 50);
+
+    int use_direction_classify = int(Config_["use_direction_classify"]);
   cv::Mat src_image;
   bgrImage_resize.copyTo(src_image);
 

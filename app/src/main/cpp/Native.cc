@@ -23,9 +23,9 @@
  */
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_engine_scan_ppocr_Native_nativeInit(
-    JNIEnv *env, jclass thiz, jstring jDetModelPath, jstring jClsModelPath,
-    jstring jRecModelPath, jstring jConfigPath, jstring jLabelPath,
-    jint cpuThreadNum, jstring jCPUPowerMode)
+        JNIEnv *env, jclass thiz, jstring jDetModelPath, jstring jClsModelPath,
+        jstring jRecModelPath, jstring jConfigPath, jstring jLabelPath,
+        jint cpuThreadNum, jstring jCPUPowerMode)
 {
   std::string detModelPath = jstring_to_cpp_string(env, jDetModelPath);
   std::string clsModelPath = jstring_to_cpp_string(env, jClsModelPath);

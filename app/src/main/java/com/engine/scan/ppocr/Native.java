@@ -20,6 +20,10 @@ public class Native {
             }
         }
     }
+    
+    public Native() {
+        loadLibrary();
+    }
 
     private boolean run_status;
     private long ctx = 0;
@@ -39,7 +43,7 @@ public class Native {
                 labelPath,
                 cpuThreadNum,
                 cpuPowerMode);
-        return ctx == 0;
+        return ctx != 0;
     }
 
     public boolean release() {
@@ -57,13 +61,15 @@ public class Native {
         return run_status;
     }
 
-    public native long nativeInit(String detModelPath,
-                                         String clsModelPath,
-                                         String recModelPath,
-                                         String configPath,
-                                         String labelPath,
-                                         int cpuThreadNum,
-                                         String cpuPowerMode);
+    public static native long nativeInit(
+            String detModelPath,
+            String clsModelPath,
+            String recModelPath,
+            String configPath,
+            String labelPath,
+            int cpuThreadNum,
+            String cpuPowerMode
+    );
 
     public static native boolean nativeRelease(long ctx);
     public static native boolean nativeProcess(long ctx, int inTextureId, int outTextureId, int textureWidth, int textureHeight, String savedImagePath);
