@@ -6,11 +6,19 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OcrResultModel {
-    public String text;
-    public float score;
+    private String text;
+    private float score;
 
     public OcrResultModel(String text, float score) {
         this.text = text;
         this.score = score;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public float getScore() {
+        return score;
     }
 }

@@ -85,8 +85,12 @@ public class Native {
     }
 
     private ArrayList<OcrResultModel> postProcess(Object[] raw) {
-        ArrayList<OcrResultModel> results = new ArrayList<OcrResultModel>();
-        int begin = 0;
+        ArrayList<OcrResultModel> results = new ArrayList<>();
+        for (Object obj : raw) {
+            if (obj instanceof OcrResultModel) {
+                results.add((OcrResultModel) obj);
+            }
+        }
         return results;
     }
 }

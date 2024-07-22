@@ -315,25 +315,8 @@ OCRResult Pipeline::Process_valText(const cv::Mat &bgrImage)
 {
   double visualizeResultsTime = 0, predictTime = 0;
 
-    cv::Mat bgrImage_resize;
-    double scaleFactor = 0.1;
-    int newHeight = static_cast<int>(bgrImage.rows * scaleFactor);
-    int newWidth = static_cast<int>(bgrImage.cols * scaleFactor);
-    cv::resize(bgrImage, bgrImage_resize, cv::Size(newWidth, newHeight));
-
-    cv::Mat sharpenKernel = (cv::Mat_<float>(3, 3) <<
-                                                   0, -1, 0,
-            -1, 5, -1,
-            0, -1, 0);
-    cv::Mat bgrImage_sharpened;
-    cv::filter2D(bgrImage_resize, bgrImage_sharpened, -1, sharpenKernel);
-
-    cv::Mat bgrImage_contrast;
-    cv::convertScaleAbs(bgrImage_sharpened, bgrImage_contrast, 1.5, 50);
-
-    int use_direction_classify = int(Config_["use_direction_classify"]);
   cv::Mat src_image;
-  bgrImage_resize.copyTo(src_image);
+  bgrImage.copyTo(src_image);
 
   // Stage1: rec
   auto t = GetCurrentTime();
@@ -345,7 +328,8 @@ OCRResult Pipeline::Process_valText(const cv::Mat &bgrImage)
   OCRResult result;
   for (int i = boxes.size() - 1; i >= 0; i--)
   {
-    cv::Mat crop_img = GetRotateCropImage(bgrImage_resize, boxes[i]);
+    cv::Mat crop_img = GetRotateCropImage(src_image, boxes[i]);
+    int use_direction_classify = int(Config_["use_direction_classify"]);
     if (use_direction_classify >= 1)
     {
       crop_img = clsPredictor_->Predict(crop_img, nullptr, nullptr, nullptr, 0.9);

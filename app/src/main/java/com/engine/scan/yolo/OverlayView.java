@@ -45,8 +45,8 @@ public class OverlayView extends View {
         textPaint.setStyle(Paint.Style.FILL);
         textPaint.setTextSize(50f);
 
-        boxPaint.setColor(Color.BLACK);
-        boxPaint.setStrokeWidth(8F);
+        boxPaint.setColor(Color.BLUE);
+        boxPaint.setStrokeWidth(12F);
         boxPaint.setStyle(Paint.Style.STROKE);
     }
 
@@ -62,7 +62,7 @@ public class OverlayView extends View {
                 float bottom = result.getY2() * getHeight();
 
                 canvas.drawRect(left, top, right, bottom, boxPaint);
-                String drawableText = result.getClsName();
+                String drawableText = ""; // result.getClsName()
 
                 textBackgroundPaint.getTextBounds(drawableText, 0, drawableText.length(), bounds);
                 int textWidth = bounds.width();

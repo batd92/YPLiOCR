@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
@@ -20,12 +22,15 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.engine.scan.common.AssetCopier;
 import com.engine.scan.ppocr.Native;
+import com.engine.scan.ppocr.OcrResultModel;
 import com.engine.scan.yolo.BoundingBox;
 import com.engine.scan.yolo.Detector;
 import com.engine.scan.yolo.OverlayView;
@@ -43,8 +48,8 @@ public class MainActivity extends AppCompatActivity {
     protected static final String LABEL_PATH_DEFAULT = "labels";
     protected static final String CONFIG_PATH_DEFAULT = "config";
 
-    // PaddleOCR model
-    protected String detModelPath = "ch_ppocr_mobile_v2.0_det_slim_opt.nb";
+    // PaddleOCR model 
+    protected String detModelPath = "ch_ppocr_mobile_v2.0_det_slim_opt.nb";//"ch_PP-OCRv3_det_slim_infer.nb";
     protected String recModelPath = "ch_ppocr_mobile_v2.0_rec_slim_opt.nb";
     protected String clsModelPath = "ch_ppocr_mobile_v2.0_cls_slim_opt.nb";
     protected String labelPath = "ppocr_keys_v1.txt";
@@ -86,6 +91,8 @@ public class MainActivity extends AppCompatActivity {
         getLayoutOnScreen();
         initHandlers();
         initWorkerThread();
+        // copy image Assets
+        AssetCopier.copyAssetsImagesToPhotos(this);
     }
 
     // Setup the UI components
@@ -277,16 +284,25 @@ public class MainActivity extends AppCompatActivity {
             if (image != null) {
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
                     List<BoundingBox> bestBoxes = yoloV8.detect(image);
+
                     if (bestBoxes != null) {
                         Log.d("onRunModel", "Bounding boxes detected: " + bestBoxes.size());
 
                         List<Bitmap> croppedImages = cropBoundingBoxes(image, bestBoxes);
                         Log.d("onRunModel", "Cropped images created: " + croppedImages.size());
 
+                        StringBuilder ocrResults = new StringBuilder();
                         for (Bitmap croppedImage : croppedImages) {
                             saveImageToStorage(croppedImage);
-                            paddleNative.runImage(croppedImage);
+                            ArrayList<OcrResultModel> result = paddleNative.runImage(croppedImage);
+
+                            for (OcrResultModel ocrResult : result) {
+                                ocrResults.append(ocrResult.getText()).append("\n");
+                            }
                         }
+
+                        TextView tvResult = findViewById(R.id.tv_result);
+                        tvResult.setText(ocrResults.toString());
 
                         // Draw bounding boxes
                         OverlayView overlayView = findViewById(R.id.overlayView);
@@ -321,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
 
     private List<Bitmap> cropBoundingBoxes(Bitmap image, List<BoundingBox> boxes) {
         List<Bitmap> croppedImages = new ArrayList<>();
+        int frameSize = 448;
 
         for (BoundingBox box : boxes) {
             int left = (int) (box.getX1() * image.getWidth());
@@ -338,16 +355,20 @@ public class MainActivity extends AppCompatActivity {
 
             Bitmap croppedImage = Bitmap.createBitmap(image, left, top, width, height);
 
-            if (height > width * 3) {
-                Matrix matrix = new Matrix();
-                matrix.postRotate(90);
-                croppedImage = Bitmap.createBitmap(croppedImage, 0, 0, croppedImage.getWidth(), croppedImage.getHeight(), matrix, true);
-            }
+            Bitmap blackFrame = Bitmap.createBitmap(frameSize, frameSize, Bitmap.Config.ARGB_8888);
+            Canvas canvas = new Canvas(blackFrame);
+            canvas.drawColor(Color.BLACK);
 
-            croppedImages.add(croppedImage);
+            int xOffset = (frameSize - width) / 2;
+            int yOffset = (frameSize - height) / 2;
+
+            canvas.drawBitmap(croppedImage, xOffset, yOffset, null);
+
+            croppedImages.add(blackFrame);
         }
         return croppedImages;
     }
+
 
     public void onLoadModelFailed() {
         // TODO
@@ -401,6 +422,10 @@ public class MainActivity extends AppCompatActivity {
                     cursor.moveToFirst();
                     if (image != null) {
                         ivInputImage.setImageBitmap(image);
+                        OverlayView overlayView = findViewById(R.id.overlayView);
+                        overlayView.setResults(null);
+                        TextView tvResult = findViewById(R.id.tv_result);
+                        tvResult.setText("");
                     }
                 }
             }
