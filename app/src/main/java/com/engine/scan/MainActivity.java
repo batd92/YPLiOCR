@@ -277,47 +277,48 @@ public class MainActivity extends AppCompatActivity {
      * Detect image
      */
     public boolean onRunModel() {
-        // Detect by yolo -> paddler ocr
         try {
             Bitmap image = ((BitmapDrawable) ivInputImage.getDrawable()).getBitmap();
-            Log.d("onRunModel", "Image and modes are ready");
-            if (image != null) {
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            if (image != null && android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+                new Thread(() -> {
                     List<BoundingBox> bestBoxes = yoloV8.detect(image);
-
-                    if (bestBoxes != null) {
-                        Log.d("onRunModel", "Bounding boxes detected: " + bestBoxes.size());
-
-                        List<Bitmap> croppedImages = cropBoundingBoxes(image, bestBoxes);
-                        Log.d("onRunModel", "Cropped images created: " + croppedImages.size());
-
-                        StringBuilder ocrResults = new StringBuilder();
-                        for (Bitmap croppedImage : croppedImages) {
-                            saveImageToStorage(croppedImage);
-                            ArrayList<OcrResultModel> result = paddleNative.runImage(croppedImage);
-
-                            for (OcrResultModel ocrResult : result) {
-                                ocrResults.append(ocrResult.getText()).append("\n");
-                            }
-                        }
-
-                        TextView tvResult = findViewById(R.id.tv_result);
-                        tvResult.setText(ocrResults.toString());
-
-                        // Draw bounding boxes
-                        OverlayView overlayView = findViewById(R.id.overlayView);
-                        overlayView.setResults(bestBoxes);
-                        return true;
+                    if (bestBoxes == null || bestBoxes.isEmpty()) {
+                        Log.e("onRunModel", "No bounding boxes detected.");
+                        return;
                     }
-                }
+
+                    List<Bitmap> croppedImages = cropBoundingBoxes(image, bestBoxes);
+                    StringBuilder ocrResults = new StringBuilder();
+                    for (Bitmap croppedImage : croppedImages) {
+                        saveImageToStorage(croppedImage);
+                        ArrayList<OcrResultModel> result = paddleNative.runImage(croppedImage);
+                        result.forEach(ocr -> ocrResults.append(ocr.getText()).append("\n"));
+                    }
+
+                    String ocrText = ocrResults.toString().trim();
+                    runOnUiThread(() -> updateUI(bestBoxes, ocrText));
+                }).start();
+                return true;
             }
             return false;
         } catch (Exception e) {
-            e.printStackTrace();
             Log.e("onRunModel", "Error running model", e);
             return false;
         }
     }
+
+    private void updateUI(List<BoundingBox> bestBoxes, String ocrText) {
+        TextView tvResult = findViewById(R.id.tv_result);
+        if (tvResult != null) {
+            tvResult.setText(ocrText.isEmpty() ? "No OCR results." : ocrText);
+        }
+
+        OverlayView overlayView = findViewById(R.id.overlayView);
+        if (overlayView != null) {
+            overlayView.setResults(bestBoxes);
+        }
+    }
+
 
     private void saveImageToStorage(Bitmap bitmap) {
         String fileName = "cropped_image_" + System.currentTimeMillis() + ".png"; // Generate unique file name
